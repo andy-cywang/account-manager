@@ -1,16 +1,16 @@
 package merchant
 
-import "github.com/google/uuid"
-
 type Merchant struct {
-	ID   uuid.UUID
-	logo string
-	Team map[string]Member
+	ID      string            `json:"merchantID" bson:"_id"`
+	logo    string            `json:"logo" bson:"logo"`
+	Members map[string]Member `json:"members" bson:"members"`
 }
 
 type Member struct {
-	Email string
-	Name  string
+	Email string `json:"email" bson:"email"`
+	Name  string `json:"name" bson:"name"`
 }
 
-
+func (m *Merchant) getTeamMembers() []Member {
+	return nil
+}
