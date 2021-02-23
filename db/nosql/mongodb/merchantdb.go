@@ -4,9 +4,12 @@ import (
 	"account-manager/merchant"
 	"account-manager/util"
 	"context"
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"io/ioutil"
+	"mime/multipart"
 	"strings"
 	"sync"
 )
@@ -27,6 +30,23 @@ func (mdb MerchantMongoDB) GetClient() *mongo.Client {
 	return mdb.Client
 }
 
+func (mdb MerchantMongoDB) CreateMerchant(mt merchant.Merchant) (merchantID string, err error) {
+	var m merchant.Merchant
+
+	m.ID = uuid.New().String()
+	m.Logo = mt.Logo
+	m.Members = mt.Members
+
+	collection := mdb.Client.Database(DB).Collection(Collection)
+
+	_, err = collection.InsertOne(context.TODO(), m)
+	if err != nil {
+		return "", util.NewCustomError("merchantdb: create merchant: insert merchant: " + err.Error())
+	}
+
+	return m.ID, nil
+}
+
 func (mdb MerchantMongoDB) GetMerchants() ([]merchant.Merchant, error) {
 	var merchants []merchant.Merchant
 	filter := bson.D{{}}
@@ -35,7 +55,7 @@ func (mdb MerchantMongoDB) GetMerchants() ([]merchant.Merchant, error) {
 
 	cur, err := collection.Find(context.TODO(), filter)
 	if err != nil {
-		return merchants, util.NewCustomError("merchantdb: get merchants: finding merchant: " + err.Error())
+		return merchants, util.NewCustomError("merchantdb: get merchants: find merchant: " + err.Error())
 	}
 
 	for cur.Next(context.TODO()) {
@@ -43,7 +63,7 @@ func (mdb MerchantMongoDB) GetMerchants() ([]merchant.Merchant, error) {
 		err = cur.Decode(&m)
 
 		if err != nil {
-			return merchants, util.NewCustomError("merchantdb: get merchants: decoding: " + err.Error())
+			return merchants, util.NewCustomError("merchantdb: get merchants: decode: " + err.Error())
 		}
 
 		merchants = append(merchants, m)
@@ -66,7 +86,7 @@ func (mdb MerchantMongoDB) AddMember(merchantID string, member merchant.Member) 
 
 	err := collection.FindOne(context.TODO(), filter).Decode(&m)
 	if err != nil {
-		return util.NewCustomError("merchantdb: add member: finding merchant: " + err.Error())
+		return util.NewCustomError("merchantdb: add member: find merchant: " + err.Error())
 	}
 
 	key := strings.Split(member.Email, "@")[0]
@@ -81,7 +101,7 @@ func (mdb MerchantMongoDB) AddMember(merchantID string, member merchant.Member) 
 
 		_, err = collection.UpdateOne(context.TODO(), filter, updater)
 		if err != nil {
-			return util.NewCustomError("merchantdb: add member: updating merchant: " + err.Error())
+			return util.NewCustomError("merchantdb: add member: update merchant: " + err.Error())
 		}
 		return nil
 	}
@@ -95,7 +115,7 @@ func (mdb MerchantMongoDB) UpdateMember(merchantID string, member merchant.Membe
 
 	err := collection.FindOne(context.TODO(), filter).Decode(&m)
 	if err != nil {
-		return util.NewCustomError("merchantdb: update member: finding merchant: " + err.Error())
+		return util.NewCustomError("merchantdb: update member: find merchant: " + err.Error())
 	}
 
 	key := strings.Split(member.Email, "@")[0]
@@ -110,7 +130,7 @@ func (mdb MerchantMongoDB) UpdateMember(merchantID string, member merchant.Membe
 
 		_, err = collection.UpdateOne(context.TODO(), filter, updater)
 		if err != nil {
-			return util.NewCustomError("merchantdb: update member: updating merchant: " + err.Error())
+			return util.NewCustomError("merchantdb: update member: update merchant: " + err.Error())
 		}
 		return nil
 
@@ -127,7 +147,7 @@ func (mdb MerchantMongoDB) DeleteMember(merchantID string, memberEmail string) e
 
 	err := collection.FindOne(context.TODO(), filter).Decode(&m)
 	if err != nil {
-		return util.NewCustomError("merchantdb: delete member: finding merchant: " + err.Error())
+		return util.NewCustomError("merchantdb: delete member: find merchant: " + err.Error())
 	}
 
 	key := strings.Split(memberEmail, "@")[0]
@@ -140,7 +160,7 @@ func (mdb MerchantMongoDB) DeleteMember(merchantID string, memberEmail string) e
 
 		_, err = collection.UpdateOne(context.TODO(), filter, updater)
 		if err != nil {
-			return util.NewCustomError("merchantdb: delete member: updating merchant: " + err.Error())
+			return util.NewCustomError("merchantdb: delete member: update merchant: " + err.Error())
 		}
 		return nil
 
@@ -157,7 +177,7 @@ func (mdb MerchantMongoDB) GetMembers(merchantID string) ([]merchant.Member, err
 
 	err := collection.FindOne(context.TODO(), filter).Decode(&m)
 	if err != nil {
-		return nil, util.NewCustomError("merchantdb: get members: finding merchant: " + err.Error())
+		return nil, util.NewCustomError("merchantdb: get members: find merchant: " + err.Error())
 	}
 	var members []merchant.Member
 
@@ -166,4 +186,29 @@ func (mdb MerchantMongoDB) GetMembers(merchantID string) ([]merchant.Member, err
 	}
 
 	return members, nil
+}
+
+func (mdb MerchantMongoDB) UploadLogo(merchantID string, file multipart.File) error {
+	var m merchant.Merchant
+	filter := bson.D{primitive.E{Key: "_id", Value: merchantID}}
+
+	collection :=  mdb.Client.Database(DB).Collection(Collection)
+
+	err := collection.FindOne(context.TODO(), filter).Decode(&m)
+
+	fileBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		return util.NewCustomError("merchantdb: upload logo: read file: " + err.Error())
+	}
+
+	updater := bson.D{primitive.E{Key: "$set", Value: bson.D{
+		primitive.E{Key: "logo", Value: string(fileBytes)},
+	}}}
+
+	_, err = collection.UpdateOne(context.TODO(), filter, updater)
+	if err != nil {
+		return util.NewCustomError("merchantdb: upload logo: update merchant: " + err.Error())
+	}
+
+	return nil
 }

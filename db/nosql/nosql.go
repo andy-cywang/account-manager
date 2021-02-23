@@ -1,8 +1,14 @@
 package nosql
 
-import "account-manager/merchant"
+import (
+	"account-manager/merchant"
+	"mime/multipart"
+)
 
 type Nosql interface {
+
+	// CreateMerchant creates a merchant account
+	CreateMerchant(merchant merchant.Merchant) (merchantID string, err error)
 
 	// GetMerchants gets all merchant accounts
 	GetMerchants() ([]merchant.Merchant, error)
@@ -18,4 +24,6 @@ type Nosql interface {
 
 	// GetMembers gets all team members from merchant account
 	GetMembers(merchantID string) ([]merchant.Member, error)
+
+	UploadLogo(merchantID string, file multipart.File) error
 }

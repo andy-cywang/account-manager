@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	MerchantMongoDBHost = "mongodb://localhost"
+	MerchantMongoDBHost = "mongodb://mongodb"
 	MerchantMongoDBPort = "27017"
 	AddMember = "Add"
 	UpdateMember = "Update"
@@ -35,6 +35,20 @@ func NewMerchantController() (*MerchantController, error) {
 			Client: mongoClient,
 		},
 	}, nil
+}
+
+func (mc MerchantController) CreateMerchant(w http.ResponseWriter, r *http.Request) {
+	m, err := middleware.ValidateMerchantRequest(r)
+	if err != nil {
+		middleware.WriteErrResponse(w, err, http.StatusBadRequest)
+	}
+
+	merchantID, err := mc.merchantDB.CreateMerchant(m)
+	if err != nil {
+		middleware.WriteErrResponse(w, err, http.StatusBadRequest)
+	}
+
+	middleware.WriteJSONResponse(w, merchantID, http.StatusOK)
 }
 
 func (mc MerchantController) GetMerchants(w http.ResponseWriter, r *http.Request) {
@@ -97,4 +111,27 @@ func (mc MerchantController) GetMembers(w http.ResponseWriter, r *http.Request) 
 	}
 
 	middleware.WriteJSONResponse(w, merchants, http.StatusOK)
+}
+
+func (mc MerchantController) UploadLogo(w http.ResponseWriter, r *http.Request) {
+	r.ParseMultipartForm(50000)
+
+	file, _, err := r.FormFile("logo")
+	if err != nil {
+		middleware.WriteErrResponse(w, err, http.StatusBadRequest)
+	}
+
+	defer file.Close()
+
+	merchantID, err := middleware.ValidateMerchantID(r)
+	if err != nil {
+		middleware.WriteErrResponse(w, err, http.StatusBadRequest)
+	}
+
+	err = mc.merchantDB.UploadLogo(merchantID, file)
+	if err != nil {
+		middleware.WriteErrResponse(w, err, http.StatusBadRequest)
+	}
+
+	middleware.WriteJSONResponse(w, "Uploaded", http.StatusOK)
 }

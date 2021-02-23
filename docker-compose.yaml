@@ -1,0 +1,27 @@
+version: '3.7'
+
+services:
+  api:
+    image: account-manager:latest
+    container_name: accountmanager
+    ports:
+      - 8080:8080
+    depends_on:
+      - mongodb
+    networks:
+      - pacenetwork
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: "pace-merchant"
+    volumes:
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - pacenetwork
+
+networks:
+  pacenetwork:
+    name: pace_network
