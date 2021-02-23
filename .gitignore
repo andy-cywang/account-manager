@@ -1,0 +1,6 @@
+### IntelliJ IDEA ###
+.idea
+
+### Binary ###
+account-manager.exe
+main.go
