@@ -30,7 +30,7 @@ A web app backend manages merchant accounts
   **Required:**
   `{ username : "admin", password : "admin" }`
    
-**2 Create Merchant
+**2 Create Merchant**
 ----
   Create an merchant
 
@@ -169,27 +169,7 @@ A web app backend manages merchant accounts
         }
       }
    ```
-
-**8. Update Logo**
-----
-  Update a merchant's logo
-
-* **URL**
-
-  /merchant/logo
-
-* **Method:**
-
-  `PUT`
-  
-*  **URL Params**
-
-   None
- 
-* **Data Params**
-
-   None
- 
+   
 **7. Get Merchant Members**
 ----
   Get all member from a merchant specified by merchant ID
@@ -208,12 +188,34 @@ A web app backend manages merchant accounts
  
 * **Data Params**
 
+   None
+   
+**8. Update Logo**
+----
+  Update a merchant's logo
+
+* **URL**
+
+  /merchant/logo
+
+* **Method:**
+
+  `PUT`
+  
+*  **URL Params**
+
+   None
+ 
+* **Data Params**
+
    ```
       { 
         "merchantID": string,
         "logo": string
       }
    ```
+ 
+
    
 # How to Run
 1. Run `docker-compose up`. This will bring up the server together with mongo DB.
