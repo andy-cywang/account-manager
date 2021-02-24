@@ -15,6 +15,10 @@ func ValidateLoginCredentials(r *http.Request) (username string, password string
 		return "", "",  err
 	}
 
+	if c.Username == "" || c.Password == "" {
+		return "", "",  util.NewCustomError("middle: login: invalid login credentials")
+	}
+
 	return c.Username, c.Password, nil
 }
 
