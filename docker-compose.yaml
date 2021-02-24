@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   api:
-    image: account-manager:latest
+    image: andyang1991/account-manager:latest
     container_name: accountmanager
     ports:
       - 8080:8080
