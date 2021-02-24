@@ -29,16 +29,6 @@ A web app backend manages merchant accounts
 
   **Required:**
   `{ username : "admin", password : "admin" }`
-
-* **Success Response:**
-
-  * **Code:** 200 OK <br />
-    **Content:** `message: "Logged in"`
- 
-* **Error Response:**
-
-  * **Code:** 401 Unauthorized<br />
-    **Content:** `{ error : "Username and/or password do not matc" }`
    
 **2 Create Merchant
 ----
